@@ -37,6 +37,7 @@ class Block(nn.Module):
         self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
         self.relu = nn.ReLU()
         self.identity_downsample = identity_downsample
+
     def forward(self, x):
         identity = x
         if self.num_layers > 34:
@@ -96,6 +97,7 @@ class ResNet(nn.Module):
         x = x.reshape(x.shape[0], -1)
         x = self.fc(x)
         return x
+
     def make_layers(self, num_layers, block, num_residual_blocks, intermediate_channels, stride):
         layers = []
         identity_downsample = nn.Sequential(nn.Conv2d(self.in_channels, intermediate_channels*self.expansion, kernel_size=1, stride=stride),
@@ -260,7 +262,8 @@ if __name__ == '__main__':
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
     }
-    data_dir = r"D:\AHALYA\DataScience\semester 2\MLP\Data1010\Data"
+    data_dir = r"C:\Users\VINUS\Desktop\MLP\code\Data\Data"
+    #data_dir = r"D:\AHALYA\DataScience\semester 2\MLP\Data1010\Data"
     image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                               data_transforms[x])
                       for x in ['Train', 'Validation', 'Test']}
@@ -285,7 +288,7 @@ if __name__ == '__main__':
             print(name + ' has been unfrozen.')
             for param in child.parameters():
                 param.requires_grad = True
-                
+
         else:
             for param in child.parameters():
                 param.requires_grad = False
