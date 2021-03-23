@@ -38,7 +38,7 @@ def MinMaxNormalisation(A):
 
     return A;
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, num_epochs, index):
     c = torch.rand(20000, 20000).cuda()
     print("Allocated:", round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), "GB")
     since = time.time()
@@ -107,7 +107,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     ax_1.legend(loc=0)
     ax_1.set_ylabel('Accuracy')
     ax_1.set_xlabel('Epoch number')
-    fig_1.savefig('accuracy_test.pdf', dpi=None, facecolor='w', edgecolor='w',
+    fig1Path = 'accuracy_test{}.pdf'.format(index)
+    fig_1.savefig(fig1Path, dpi=None, facecolor='w', edgecolor='w',
                   orientation='portrait', papertype=None, format='pdf',
                   transparent=False, bbox_inches=None, pad_inches=0.1,
                   frameon=None, metadata=None)
@@ -121,14 +122,14 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     ax_2.legend(loc=0)
     ax_2.set_ylabel('Loss')
     ax_2.set_xlabel('Epoch number')
-    fig_2.savefig('loss_test.pdf', dpi=None, facecolor='w', edgecolor='w',
+    fig2Path = 'loss_test{}.pdf'.format(index)
+    fig_2.savefig(fig2Path, dpi=None, facecolor='w', edgecolor='w',
                   orientation='portrait', papertype=None, format='pdf',
                   transparent=False, bbox_inches=None, pad_inches=0.1,
                   frameon=None, metadata=None)
 
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
@@ -148,10 +149,15 @@ def Test_Model(model):
             _, preds = torch.max(outputs, 1)
             y_test.extend(labels.cpu().data.numpy())
             y_predict.extend(preds.cpu().data.numpy())
+        print("#######################################################################")
+        print("**************************Validation conf_matrix*************************")
         conf_matrix = metrics.confusion_matrix(np.array(y_test), np.array(y_predict))
         print(conf_matrix)
         acc = metrics.accuracy_score(np.array(y_test), np.array(y_predict))
+
+        print("**************************Validation Accuracy*************************")
         print("Acc: {:.4f}".format(acc))
+        print("*************************Validation F1 score***************************")
         f1score =  metrics.f1_score(np.array(y_test), np.array(y_predict), average=None)
         print(f1score)
         print("F1 score:".format(f1score))
@@ -166,20 +172,27 @@ def Test_Model(model):
             _, preds = torch.max(outputs, 1)
             y_test.extend(labels.cpu().data.numpy())
             y_predict.extend(preds.cpu().data.numpy())
+        print("#######################################################################")
+        print("**************************Test conf_matrix*************************")
         conf_matrix = metrics.confusion_matrix(np.array(y_test), np.array(y_predict))
         print(conf_matrix)
         acc = metrics.accuracy_score(np.array(y_test), np.array(y_predict))
+        print("**************************Test Accuracy*************************")
         print("Acc: {:.4f}".format(acc))
+        print("*************************Test F1 score***************************")
         f1score = metrics.f1_score(np.array(y_test), np.array(y_predict), average=None)
         print(f1score)
         print("F1 score:".format(f1score))
 
 
 if __name__ == '__main__':
-    # for i in [(SETC, SETA, SETB)]:
-    #     accuracy =[]
-    #     CreateTrainValidationSliptFolder(i[1],i[2], 0.25)
-    #     CreateTestFolder(i[0])
+    j = 1
+    totalAccuracy = np.zeros(4)
+    # for i in [(SETC, SETA, SETB), (SETA, SETC, SETB), (SETB, SETA, SETC)]:
+    # accuracy =[]
+    # CreateTrainValidationSliptFolder(i[1],i[2], 0)
+    # CreateTestFolder(i[0])
+    j = j + 1
     data_transforms = {
         'Train': transforms.Compose([
             transforms.Resize(256),
@@ -246,7 +259,8 @@ if __name__ == '__main__':
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs= n_epocs)
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, num_epochs= n_epocs, index= j)
+    fileToSave = 'my_model_weights{}.h5'.format(j)
     torch.save(model_ft.state_dict(), 'my_model_weights.h5')
     Test_Model(model_ft)
 
